@@ -4,6 +4,12 @@ data "aws_partition" "current" {}
 
 # Local values for CUR 2.0 configuration
 locals {
+  # Explicit values always win. When null, use Topogy (default) or Finte (when use_legacy_finte_naming).
+  bucket_name             = coalesce(var.bucket_name, var.use_legacy_finte_naming ? "finte-cur" : "topogy-cur")
+  cur_report_name         = coalesce(var.cur_report_name, var.use_legacy_finte_naming ? "FinteCostExportDaily" : "TopogyCostExportDaily")
+  cross_account_role_name = coalesce(var.cross_account_role_name, var.use_legacy_finte_naming ? "FinTeCrossAccountRole" : "TopogyCrossAccountRole")
+  cur_access_policy_name  = coalesce(var.cur_access_policy_name, var.use_legacy_finte_naming ? "FinTeCURAccessPolicy" : "TopogyCURAccessPolicy")
+
   billing_view_arn = var.cur_billing_view_arn != "" ? var.cur_billing_view_arn : "arn:${data.aws_partition.current.partition}:billing::${data.aws_caller_identity.current.account_id}:billingview/primary"
 
   table_configurations = {
@@ -20,7 +26,7 @@ locals {
 # S3 Bucket for Cost and Usage Report (CUR) data export
 # This module creates an S3 bucket with the necessary configuration for storing CUR files
 resource "aws_s3_bucket" "cur_bucket" {
-  bucket = var.bucket_name
+  bucket = local.bucket_name
 
   tags = var.tags
 }
@@ -136,7 +142,7 @@ resource "aws_bcmdataexports_export" "cur_report" {
   count = var.enable_cur ? 1 : 0
 
   export {
-    name = var.cur_report_name
+    name = local.cur_report_name
     data_query {
       query_statement      = var.cur_query_statement
       table_configurations = local.table_configurations
@@ -164,12 +170,12 @@ resource "aws_bcmdataexports_export" "cur_report" {
   tags = var.tags
 }
 
-# IAM policy used to grant the FinTeCrossAccountRole access to the S3 bucket
+# IAM policy used to grant the TopogyCrossAccountRole access to the S3 bucket
 # which is storing the CUR 2.0 report
 resource "aws_iam_policy" "cur_access_policy" {
   count       = var.create_cur_access_policy ? 1 : 0
-  name        = var.cur_access_policy_name
-  description = "Policy to allow FinTeCrossAccountRole access to the S3 bucket which is storing the CUR 2.0 report"
+  name        = local.cur_access_policy_name
+  description = "Policy to allow ${local.cross_account_role_name} access to the S3 bucket which is storing the CUR 2.0 report"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -191,9 +197,9 @@ resource "aws_iam_policy" "cur_access_policy" {
   })
 }
 
-# Attach the CUR access policy to the existing FinTeCrossAccountRole
+# Attach the CUR access policy to the existing TopogyCrossAccountRole
 resource "aws_iam_role_policy_attachment" "cur_access_policy_attachment" {
   count      = var.create_cur_access_policy ? 1 : 0
-  role       = var.cross_account_role_name
+  role       = local.cross_account_role_name
   policy_arn = aws_iam_policy.cur_access_policy[0].arn
 }
