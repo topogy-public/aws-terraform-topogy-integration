@@ -33,7 +33,7 @@ If you already override resource names (e.g., `bucket_name = "finte-cur-terrafor
 
 The example below uses ref=main (which is appended in the URL), but it is recommended to use a specific tag version (i.e. ref=0.0.1) to avoid breaking changes. Go to the [release page](https://github.com/topogy-public/aws-terraform-topogy-integration/releases) for a list of published versions.
 
-You do not need to set any variables—defaults use Topogy naming. You may wish to enable versioning via `enable_versioning`.
+You do not need to set any variables—defaults to use Topogy naming. You may wish to enable versioning of your S3 bucket via `enable_versioning` variable. We do NOT recommend changing the CUR report.
 
 ```hcl
 module "cur_s3_bucket" {
@@ -43,9 +43,16 @@ module "cur_s3_bucket" {
 }
 ```
 
-# We recommend you include the following output statements
-# so you can get easy access to the values that you will need to 
-# input in the Topogy integration form
+We recommend including the following output statements so you can easily copy the values into the Topogy "Add credentials" form when connecting your AWS account. The outputs map directly to the CUR Credentials section of that form (see the [Integration Guide](https://docs.google.com/document/d/1U9wysY8wVnQMd4If3QJ1wzUZaSlAFZhRCjxnAYTr1eI/edit?tab=t.dqnjmc5bg96p#bookmark=id.dz1b28l35yet) for an example):
+
+| Terraform output   | Topogy form field   |
+|--------------------|---------------------|
+| `bucket_name`      | S3 bucket name      |
+| `s3_path_prefix`   | S3 prefix           |
+| `cur_report_name`  | Report name         |
+| `bucket_region`    | Region              |
+
+```hcl
 output "cur_bucket_name" {
   description = "Name of the CUR S3 bucket"
   value       = try(module.cur_s3_bucket.bucket_name, null)
