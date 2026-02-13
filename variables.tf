@@ -1,7 +1,14 @@
+variable "use_legacy_finte_naming" {
+  description = "Set to true if you have existing Finte-named resources (finte-cur, FinteCostExportDaily, FinTeCrossAccountRole, FinTeCURAccessPolicy). New deployments should omit this."
+  type        = bool
+  default     = false
+}
+
 variable "bucket_name" {
-  description = "Name of the S3 bucket for storing CUR files"
+  description = "Name of the S3 bucket for storing CUR files. When null, uses topogy-cur (or finte-cur when use_legacy_finte_naming is true)."
   type        = string
-  default     = "finte-cur"
+  default     = null
+  nullable    = true
 }
 
 variable "s3_path_prefix" {
@@ -60,9 +67,10 @@ variable "enable_cur" {
 }
 
 variable "cur_report_name" {
-  description = "Name of the Cost and Usage Report 2.0 export"
+  description = "Name of the Cost and Usage Report 2.0 export. When null, uses TopogyCostExportDaily (or FinteCostExportDaily when use_legacy_finte_naming is true)."
   type        = string
-  default     = "FinteCostExportDaily"
+  default     = null
+  nullable    = true
 }
 
 variable "cur_query_statement" {
@@ -149,19 +157,21 @@ variable "cur_frequency" {
 
 # IAM policy configuration for CUR access
 variable "create_cur_access_policy" {
-  description = "Whether to create the FinTeCURAccessPolicy IAM policy used to grant the FinTeCrossAccountRole access to the S3 bucket which is storing the CUR 2.0 report. If false, you will need to create the policy manually."
+  description = "Whether to create the TopogyCURAccessPolicy IAM policy used to grant the TopogyCrossAccountRole access to the S3 bucket which is storing the CUR 2.0 report. If false, you will need to create the policy manually."
   type        = bool
   default     = true
 }
 
 variable "cross_account_role_name" {
-  description = "Name of the existing IAM role to attach the FinTeCURAccessPolicy to. If following our best practices, this will be the FinTeCrossAccountRole."
+  description = "Name of the existing IAM role to attach the CUR access policy to. When null, uses TopogyCrossAccountRole (or FinTeCrossAccountRole when use_legacy_finte_naming is true)."
   type        = string
-  default     = "FinTeCrossAccountRole"
+  default     = null
+  nullable    = true
 }
 
 variable "cur_access_policy_name" {
-  description = "Name of the IAM policy used to grant the FinTeCrossAccountRole access to the S3 bucket which is storing the CUR 2.0 report."
+  description = "Name of the IAM policy used to grant the cross-account role access to the S3 bucket. When null, uses TopogyCURAccessPolicy (or FinTeCURAccessPolicy when use_legacy_finte_naming is true)."
   type        = string
-  default     = "FinTeCURAccessPolicy"
+  default     = null
+  nullable    = true
 }
